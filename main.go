@@ -1,10 +1,7 @@
 package main
 
 import (
-	"net/http"
 	"os"
-	"os/signal"
-	"syscall"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/AndrewO777/BandPracticeAPI/routes"
@@ -12,20 +9,17 @@ import (
 )
 
 func main() {
-	db.Init()
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-	go func() {
-		<-sigChan
-		fmt.Println("\nShutting down...")
-		db.DB.Close()
-		os.Exit(0)
-	}()
-
+	if err := db.Init(); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to initialize database: %v\n", err)
+		os.Exit(1)
+	}
+	defer db.DB.Close()
 
 	router := gin.Default()
 	router.SetTrustedProxies(nil)
 	routes.RegisterSongRoutes(router)
 
-	router.Run()
+	if err := router.Run(); err != nil {
+		fmt.Fprintf(os.Stderr, "Server error: %v\n", err)
+	}
 }

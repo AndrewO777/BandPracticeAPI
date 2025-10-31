@@ -4,24 +4,26 @@ import (
 	"database/sql"
 	"os"
 	"log"
+	"errors"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
 )
 
 var DB *sql.DB
 	
-func Init() {
+func Init() error {
 	_ = godotenv.Load()
 	dsn := os.Getenv("MYSQL_DSN")
 	if dsn == "" {
-		log.Fatal("MYSQL_DSN environment variable not set")
+		return errors.New("MYSQL_DSN environment variable not set")
 	}
 	var err error
 	DB, err = sql.Open("mysql", dsn)
 	if err != nil {
-		log.Fatal("Failed to connect to database:", err)
+		return err
 	}
 	if err := DB.Ping(); err != nil {
-		log.Fatal("Database unreachable:", err)
+		return err
 	}
+	return nil 
 }
